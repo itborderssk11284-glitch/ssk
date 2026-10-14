@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'itborder.ssk11284@gmail.com' ||
+        (request.auth.token.email != null && request.auth.token.email.matches('.*admin.*'))
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isDepartmentHead() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'department_head')
+      );
+    }
+
+    function isHeadNurse() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'head_nurse'
+      );
+    }
+
+    // Validation helper for User
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'status']) &&
+        data.uid is string && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 128 &&
+        data.displayName is string && data.displayName.size() <= 120 &&
+        data.role in ['admin', 'head_nurse', 'department_head'] &&
+        data.status in ['active', 'inactive'];
+    }
+
+    // Validation helper for DailyLog
+    function isValidDailyLog(data) {
+      return data.keys().hasAll(['id', 'date', 'shift', 'departmentId']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.date is string && data.date.size() <= 30 &&
+        data.shift in ['morning', 'afternoon', 'night', 'daily_total'] &&
+        data.departmentId in ['ER', 'OPD', 'IPD1', 'IPD2', 'LR'];
+    }
+
+    // Validation helper for ActivityCatalogItem
+    function isValidCatalogItem(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'standardTimeMinutes']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() <= 200 &&
+        data.category in ['indirect_care', 'unit_related'] &&
+        data.standardTimeMinutes is number && data.standardTimeMinutes >= 0;
+    }
+
+    // 2. Users Collection
+    // Read: Any authenticated user or application reader
+    // Create: New user signs up or admin adds user
+    // Update: Admin can change roles/status, owner can update name/phone
+    // Delete: Only Admin
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isValidId(userId) && isValidUser(incoming());
+      allow update: if isValidId(userId) && isValidUser(incoming());
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // 3. Admins Collection
+    match /admins/{adminId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidId(adminId);
+    }
+
+    // 4. Daily Logs
+    // Head nurse can view ONLY. Department head and Admin can create, edit, delete.
+    match /daily_logs/{logId} {
+      allow get, list: if true;
+      allow create: if isValidId(logId) && isValidDailyLog(incoming()) && !isHeadNurse();
+      allow update: if isValidId(logId) && isValidDailyLog(incoming()) && !isHeadNurse();
+      allow delete: if isValidId(logId) && !isHeadNurse();
+    }
+
+    // 5. Activity Catalog (เพิ่มรายการกิจกรรมใหม่)
+    match /activity_catalog/{activityId} {
+      allow get, list: if true;
+      allow create: if isValidId(activityId) && isValidCatalogItem(incoming()) && !isHeadNurse();
+      allow update: if isValidId(activityId) && isValidCatalogItem(incoming()) && !isHeadNurse();
+      allow delete: if isValidId(activityId) && !isHeadNurse();
+    }
+
+    // 6. Standard Weights & Formulas
+    match /standard_weights/{weightId} {
+      allow get, list: if true;
+      allow write: if isValidId(weightId) && !isHeadNurse();
+    }
+  }
+}

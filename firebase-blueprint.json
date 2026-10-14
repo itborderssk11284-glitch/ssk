@@ -1,0 +1,214 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control for hospital staffing system",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique Firebase Authentication User ID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "format": "email",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Role in the hospital system",
+          "enum": ["admin", "head_nurse", "department_head"]
+        },
+        "department": {
+          "type": "string",
+          "description": "Assigned hospital department",
+          "maxLength": 30
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number",
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "description": "User account status",
+          "enum": ["active", "inactive"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Account last update timestamp"
+        }
+      },
+      "required": ["uid", "email", "displayName", "role", "status"]
+    },
+    "DailyLog": {
+      "title": "DailyLog",
+      "description": "Daily nursing workload and patient census log per department and shift",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique daily log identifier",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the log entry (YYYY-MM-DD)",
+          "maxLength": 20
+        },
+        "shift": {
+          "type": "string",
+          "description": "Shift type",
+          "enum": ["morning", "afternoon", "night"]
+        },
+        "departmentId": {
+          "type": "string",
+          "description": "Department code",
+          "maxLength": 20
+        },
+        "registeredNurses": {
+          "type": "number",
+          "description": "Actual RN count on duty"
+        },
+        "practicalNurses": {
+          "type": "number",
+          "description": "Actual PN count on duty"
+        },
+        "nursingAides": {
+          "type": "number",
+          "description": "Actual NA count on duty"
+        },
+        "patientCount": {
+          "type": "number",
+          "description": "Total patient census"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Shift observations or remarks",
+          "maxLength": 500
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User UID who created the entry",
+          "maxLength": 128
+        },
+        "createdByName": {
+          "type": "string",
+          "description": "Name of user who created the entry",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["id", "date", "shift", "departmentId", "patientCount", "registeredNurses"]
+    },
+    "ActivityCatalogItem": {
+      "title": "ActivityCatalogItem",
+      "description": "Standard nursing activity time catalog item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Activity item ID",
+          "maxLength": 128
+        },
+        "departmentId": {
+          "type": "string",
+          "description": "Department code",
+          "maxLength": 20
+        },
+        "name": {
+          "type": "string",
+          "description": "Activity name",
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "description": "Activity category",
+          "maxLength": 80
+        },
+        "standardTimeMinutes": {
+          "type": "number",
+          "description": "Standard minutes per occurrence"
+        },
+        "frequencyPerShift": {
+          "type": "number",
+          "description": "Average frequency per shift"
+        },
+        "nurseRatio": {
+          "type": "number",
+          "description": "Nurse proportion for this task"
+        },
+        "isCustom": {
+          "type": "boolean",
+          "description": "Flag for user-added activity"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User UID who created this item",
+          "maxLength": 128
+        }
+      },
+      "required": ["id", "departmentId", "name", "category", "standardTimeMinutes"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Record in admins collection certifying admin privileges",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Admin email",
+          "format": "email",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Role marker",
+          "enum": ["admin"]
+        }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User account profiles with role definitions"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Registry of system administrators"
+    },
+    "/daily_logs/{logId}": {
+      "schema": { "$ref": "#/entities/DailyLog" },
+      "description": "Daily workload and staffing logs"
+    },
+    "/activity_catalog/{activityId}": {
+      "schema": { "$ref": "#/entities/ActivityCatalogItem" },
+      "description": "Nursing standard activities catalog"
+    }
+  }
+}

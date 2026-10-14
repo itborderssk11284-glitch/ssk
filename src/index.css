@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Prompt', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Custom Print Styles for Hospital Staffing Reports */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* Eye-Care Warm Mode (โหมดถนอมสายตา ตัดแสงสีฟ้า สบายตาระยะยาวสำหรับพยาบาล) */
+html.eye-care {
+  background-color: #faf6ed !important;
+  color: #2c2724;
+}
+
+html.eye-care body {
+  background-color: #f8f3e8 !important;
+  color: #2c2724 !important;
+  filter: sepia(0.16) hue-rotate(-6deg) contrast(0.96) brightness(0.98);
+}
+
+html.eye-care .bg-white {
+  background-color: #fdfbf7 !important;
+}
+
+html.eye-care .bg-slate-50,
+html.eye-care .bg-slate-100\/70,
+html.eye-care .bg-slate-100 {
+  background-color: #f4ede1 !important;
+}
+
+html.eye-care .border-slate-200,
+html.eye-care .border-slate-200\/80,
+html.eye-care .border-slate-100 {
+  border-color: #e5dac7 !important;
+}
+
+html.eye-care aside {
+  background-color: #fdfbf6 !important;
+  border-color: #e5dac7 !important;
+}
+
+html.eye-care header {
+  background-color: rgba(253, 251, 246, 0.95) !important;
+  border-color: #e5dac7 !important;
+}
